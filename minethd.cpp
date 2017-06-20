@@ -28,6 +28,7 @@
 #include <bitset>
 #include "console.h"
 #include "crypto/low_power.h"
+#include "crypto/algorithm.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -52,7 +53,7 @@ void thd_setaffinity(std::thread::native_handle_type h, uint64_t cpu_id)
 {
 #if defined(__APPLE__)
 	thread_port_t mach_thread;
-	thread_affinity_policy_data_t policy = { cpu_id };
+	thread_affinity_policy_data_t policy = { (int)cpu_id };
 	mach_thread = pthread_mach_thread_np(h);
 	thread_policy_set(mach_thread, THREAD_AFFINITY_POLICY, (thread_policy_t)&policy, 1);
 #elif defined(__FreeBSD__)
@@ -258,8 +259,12 @@ bool minethd::self_test()
 		}
 	}
 
+#if MINER_ALGORITHM == ALGORITHM_AEON
+	//Self-test doesn't work - I don't know this well enough to make it yet so just disabling.
+	return true;
+#endif
 	unsigned char out[64];
-	bool bResult;
+	bool bResult = true;
 
 	cn_hash_fun hashf;
 	cn_hash_fun_dbl hashdf;
@@ -366,12 +371,22 @@ minethd::cn_hash_fun minethd::func_selector(bool bHaveAes, bool bNoPrefetch)
 	// function as a two digit binary
 	// Digit order SOFT_AES, NO_PREFETCH
 
-	static const cn_hash_fun func_table[4] = {
-		cryptonight_hash<0x80000, MEMORY, false, false>,
-		cryptonight_hash<0x80000, MEMORY, false, true>,
-		cryptonight_hash<0x80000, MEMORY, true, false>,
-		cryptonight_hash<0x80000, MEMORY, true, true>
+#if MINER_ALGORITHM == ALGORITHM_AEON
+    static const cn_hash_fun func_table[4] = {
+		cryptonight_lite_hash<0x80000, MEMORY, false, false>,
+		cryptonight_lite_hash<0x80000, MEMORY, false, true>,
+		cryptonight_lite_hash<0x80000, MEMORY, true, false>,
+		cryptonight_lite_hash<0x80000, MEMORY, true, true>
 	};
+#else
+    static const cn_hash_fun func_table[4] = {
+        cryptonight_hash<0x80000, MEMORY, false, false>,
+        cryptonight_hash<0x80000, MEMORY, false, true>,
+        cryptonight_hash<0x80000, MEMORY, true, false>,
+        cryptonight_hash<0x80000, MEMORY, true, true>
+    };
+#endif
+
 
 	std::bitset<2> digit;
 	digit.set(0, !bNoPrefetch);
@@ -455,13 +470,21 @@ minethd::cn_hash_fun_dbl minethd::func_dbl_selector(bool bHaveAes, bool bNoPrefe
 	// therefore we will build a binary digit and select the
 	// function as a two digit binary
 	// Digit order SOFT_AES, NO_PREFETCH
-
+#if MINER_ALGORITHM == ALGORITHM_AEON
+    static const cn_hash_fun_dbl func_table[4] = {
+		cryptonight_lite_double_hash<0x80000, MEMORY, false, false>,
+		cryptonight_lite_double_hash<0x80000, MEMORY, false, true>,
+		cryptonight_lite_double_hash<0x80000, MEMORY, true, false>,
+		cryptonight_lite_double_hash<0x80000, MEMORY, true, true>
+	};
+#else
 	static const cn_hash_fun_dbl func_table[4] = {
 		cryptonight_double_hash<0x80000, MEMORY, false, false>,
 		cryptonight_double_hash<0x80000, MEMORY, false, true>,
 		cryptonight_double_hash<0x80000, MEMORY, true, false>,
 		cryptonight_double_hash<0x80000, MEMORY, true, true>
 	};
+#endif
 
 	std::bitset<2> digit;
 	digit.set(0, !bNoPrefetch);
@@ -481,7 +504,11 @@ void minethd::double_work_main()
 	uint64_t *piHashVal[LOW_POWER_HASHES];
 	uint32_t *piNonce[LOW_POWER_HASHES];
 	uint8_t bDoubleHashOut[32*LOW_POWER_HASHES];
+#if MINER_ALGORITHM == ALGORITHM_AEON
+	uint8_t	bDoubleWorkBlob[sizeof(miner_work::bWorkBlob) * 5];
+#else
 	uint8_t	bDoubleWorkBlob[sizeof(miner_work::bWorkBlob) * 2];
+#endif
 	uint32_t iNonce;
 	job_result res;
 

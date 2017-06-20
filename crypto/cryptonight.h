@@ -7,8 +7,13 @@ extern "C" {
 
 #include <stddef.h>
 #include <inttypes.h>
+#include "algorithm.h"
 
-#define MEMORY  2097152
+#if MINER_ALGORITHM == ALGORITHM_AEON
+    #define MEMORY  2097152 / 2
+#else
+    #define MEMORY  2097152
+#endif
 
 typedef struct {
 	uint8_t hash_state[224]; // Need only 200, explicit align

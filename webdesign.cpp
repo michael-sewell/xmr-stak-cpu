@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include "crypto/algorithm.h"
 
 extern const char sHtmlCssEtag [] = "00000006";
 extern const char sHtmlCssFile [] =
@@ -90,6 +91,29 @@ extern const char sHtmlCssFile [] =
 
 size_t sHtmlCssSize = sizeof(sHtmlCssFile) - 1;
 
+#if MINER_ALGORITHM == ALGORITHM_AEON
+extern const char sHtmlCommonHeader [] =
+	"<!DOCTYPE html>"
+	"<html>"
+	"<head><meta name='viewport' content='width=device-width' />"
+	"<link rel='stylesheet' href='style.css' /><title>%s</title></head>"
+	"<body>"
+	"<div class='all'>"
+	"<div class='header'><span style='color: rgb(66, 134, 244)'>AEON</span>-Stak-CPU</div>"
+
+	"<div class='flex-container'>"
+		"<div class='links flex-item'>"
+			"<a href='/h'><div><span class='letter'>H</span>ashrate</div></a>"
+		"</div>"
+		"<div class='links flex-item'>"
+			"<a href='/r'><div><span class='letter'>R</span>esults</div></a>"
+		"</div>"
+		"<div class='links flex-item'>"
+			"<a href='/c'><div><span class='letter'>C</span>onnection</div></a>"
+		"</div>"
+	"</div>"
+	"<h4>%s</h4>";
+#else
 extern const char sHtmlCommonHeader [] =
 	"<!DOCTYPE html>"
 	"<html>"
@@ -111,6 +135,7 @@ extern const char sHtmlCommonHeader [] =
 		"</div>"
 	"</div>"
 	"<h4>%s</h4>";
+#endif
 
 extern const char sHtmlHashrateBodyHigh [] =
 	"<div class=data>"
